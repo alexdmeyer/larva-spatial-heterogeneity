@@ -15,33 +15,33 @@ include("individual-model.jl")
 include("parameter-sweep.jl")
 
 # Movement functions and parameters
-κ(τ,χ,p) = p["κm"] * ((χ/p["χb"]).^p["α"] .* (χ .< p["χb"]) .+ (χ .>= p["χb"]))
-κχ(τ,χ,p) = p["κm"] * p["α"]*(χ/p["χb"]).^(p["α"]-1) .* (χ .< p["χb"])
-ν(τ,χ,p) = zeros(size(χ));
-movepars = Dict("κm" => 100., "χb" => 0., "α" => 2.)
+κ(t,x,p) = p["κ̄"] * ((x/p["xb"]).^p["α"] .* (x .< p["xb"]) .+ (x .>= p["xb"]))
+κx(t,x,p) = p["κ̄"] * p["α"]*(x/p["xb"]).^(p["α"]-1) .* (x .< p["xb"])
+ν(t,x,p) = zeros(size(x));
+movepars = Dict("κ̄" => 100., "xb" => 0., "α" => 2.)
 
 # settling function and parameters
-λs(τ,χ,p) = p["σ"] * (τ .>= p["τc"]) .* (χ .<= 1);
-settlepars = Dict("σ" => 2., "τc" => .5)
+λs(t,x,p) = p["σ"] * (t .>= p["tpc"]) .* (x .<= 1);
+settlepars = Dict("σ" => 2., "tpc" => .5)
 
 # mortality functions and parameters
-λd(τ,χ,p) = p["μ"] * (p["ϵ"] .+ (1 - p["ϵ"])*(χ .<= p["χm"]))
-mortpars = Dict("μ" => 6. ,"ϵ" => 1.,"χm" => 1.)
+λm(t,x,p) = p["μ"] * (p["ϵ"] .+ (1 - p["ϵ"])*(x .<= p["xm"]))
+mortpars = Dict("μ" => 6. ,"ϵ" => 1.,"xm" => 1.)
 
 # additional parameters
 δ = .1 # basis for time and space meshes
-otherpars = Dict("L" => 15., "h" => .5δ^2, "k" => δ,"χ0" => nothing)
+otherpars = Dict("L" => 30., "h" => .5δ^2, "k" => δ,"x0" => nothing)
 
 # parameter dict, ranges, additional arguments
-other_args = (κ,ν,λd,λs,"d","d") #(κ,ν,λd,λs)
+other_args = (κ,ν,λm,λs,"d","d") #(κ,ν,λd,λs)
 p0 = merge(movepars,settlepars,mortpars,otherpars)
 
 # for stochastic DE model
 BCs = Dict(:left => [0,:r],:right => [Inf,:r])
-f(t,x,p) = ν(t,x,p)[1] + κχ(t,x,p)[1]
+f(t,x,p) = ν(t,x,p)[1] + κx(t,x,p)[1]
 g(t,x,p) = sqrt(2*κ(t,x,p)[1])
-k(t,x,p) = [λd(t,x,p), λs(t,x,p)]
-kill_names = ["death","settling"]
+k(t,x,p) = [λm(t,x,p), λs(t,x,p)]
+kill_names = ["mortality","settling"]
 
 # stuff for plotting
 gadfly_colors = Scale.color_discrete_hue().f(10)

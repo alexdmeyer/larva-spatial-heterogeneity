@@ -15,13 +15,13 @@ cases = ["wu","wu_cbl","su","su_cbl","wh","wh_cbl","sh","sh_cbl"]
 # by case name
 pars = Dict(case => copy(p0) for case in cases)
 pars["wu"]["μ"] = 2.; pars["wu"]["ϵ"] = 1.
-pars["wu_cbl"]["μ"] = 2.; pars["wu_cbl"]["ϵ"] = 1.; pars["wu_cbl"]["χb"] = 5.
+pars["wu_cbl"]["μ"] = 2.; pars["wu_cbl"]["ϵ"] = 1.; pars["wu_cbl"]["xb"] = 5.
 pars["su"]["μ"] = 10.; pars["su"]["ϵ"] = 1.
-pars["su_cbl"]["μ"] = 10.; pars["su_cbl"]["ϵ"] = 1.; pars["su_cbl"]["χb"] = 5.
+pars["su_cbl"]["μ"] = 10.; pars["su_cbl"]["ϵ"] = 1.; pars["su_cbl"]["xb"] = 5.
 pars["wh"]["μ"] = 2.; pars["wh"]["ϵ"] = .1
-pars["wh_cbl"]["μ"] = 2.; pars["wh_cbl"]["ϵ"] = .1; pars["wh_cbl"]["χb"] = 5.
+pars["wh_cbl"]["μ"] = 2.; pars["wh_cbl"]["ϵ"] = .1; pars["wh_cbl"]["xb"] = 5.
 pars["sh"]["μ"] = 10.; pars["sh"]["ϵ"] = .1
-pars["sh_cbl"]["μ"] = 10.; pars["sh_cbl"]["ϵ"] = .1; pars["sh_cbl"]["χb"] = 5.
+pars["sh_cbl"]["μ"] = 10.; pars["sh_cbl"]["ϵ"] = .1; pars["sh_cbl"]["xb"] = 5.
 
 # preallocate ordered dictionaries to store results (ordering is so indices match)
 XX = OrderedDict() # store simulated time series
@@ -41,13 +41,13 @@ end
 bigdf = DataFrame()
 bigdf[!,:μ] = repeat([2.,10.],inner = 2*M,outer = 2)
 bigdf[!,:ϵ] = repeat([1.,.1],inner = 4*M,)
-bigdf[!,:χb] = repeat([0.,5.],inner = M,outer = 4)
+bigdf[!,:xb] = repeat([0.,5.],inner = M,outer = 4)
 bigdf[!,:θ] = vcat([df[case][:,:TimeBeyondHab] for case in cases]...)
 
 # now plot the results
 
 f4a = Gadfly.plot(
-    filter(row -> (row.μ < 5) & (row.χb < 1), bigdf),
+    filter(row -> (row.μ < 5) & (row.xb < 1), bigdf),
     x = :θ,
     color = :ϵ,
     Geom.density(bandwidth = .005),
@@ -59,7 +59,7 @@ f4a = Gadfly.plot(
 )
 
 f4b = Gadfly.plot(
-    filter(row -> (row.μ > 5) & (row.χb < 1), bigdf),
+    filter(row -> (row.μ > 5) & (row.xb < 1), bigdf),
     x = :θ,
     color = :ϵ,
     Geom.density(bandwidth = .005),
@@ -71,7 +71,7 @@ f4b = Gadfly.plot(
 )
 
 f4c = Gadfly.plot(
-    filter(row -> (row.μ < 5) & (row.χb > 1), bigdf),
+    filter(row -> (row.μ < 5) & (row.xb > 1), bigdf),
     x = :θ,
     color = :ϵ,
     Geom.density(bandwidth = .005),
@@ -83,7 +83,7 @@ f4c = Gadfly.plot(
 )
 
 f4d = Gadfly.plot(
-    filter(row -> (row.μ > 5) & (row.χb > 1), bigdf),
+    filter(row -> (row.μ > 5) & (row.xb > 1), bigdf),
     x = :θ,
     color = :ϵ,
     Geom.density(bandwidth = .005),

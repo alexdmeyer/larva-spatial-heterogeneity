@@ -22,7 +22,7 @@ end
 function KilledDiffusion1d(p,f,g,x0,tvec,BCs,k,kill_names;step_method = em1d_step)
     # initialize
     N = length(tvec)
-    X = x0*ones(N)
+    X = x0 .* ones(N)
     flag = "ran to tmax"
     # compute random numbers
     dB = randn(N-1) # brownian increments
