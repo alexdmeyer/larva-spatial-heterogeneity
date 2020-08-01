@@ -7,14 +7,14 @@ f1_p0 = copy(p0) # base parameter set
 f1_Lϵ = 50 # number of ϵ values to use
 f1_pars = OrderedDict( # parameters to be varied
     "ϵ" => collect(range(0.,1,length = f1_Lϵ)),
-    "χm" => [.1,1,2],
-    "κm" => [20.,200.],
+    "xm" => [.1,1,2],
+    "κ̄" => [20.,200.],
     "μ" => [2.,10.]
 )
 
 # do the parameter sweep, and time it
 f1_time = time()
-f1_df = parsweep_multi(larva_fates,f1_p0,f1_pars,[:S,:D,:W],other_args)
+f1_df = parsweep_multi(larva_fates,f1_p0,f1_pars,[:S,:M,:W],other_args)
 f1_time = time() - f1_time
 
 # make figures
@@ -23,13 +23,13 @@ f1a = Gadfly.plot(
     y = :S,
     Scale.y_log10,
     x = :ϵ,
-    linestyle = :χm,
-    color = :κm,
+    linestyle = :xm,
+    color = :κ̄,
     Scale.color_discrete_manual(my_colors[1:2]...), #(colormap = Colors.colormap("Grays",logscale = true)),
     Geom.line,
     Coord.cartesian(xmin = 0,xmax = 1,ymin = -3.5,ymax = 0),
     Guide.xlabel("ε"),
-    Guide.ColorKey(title = "κ")
+    Guide.ColorKey(title = "κ̄")
 )
 
 f1b = Gadfly.plot(
@@ -37,11 +37,11 @@ f1b = Gadfly.plot(
     y = :S,
     Scale.y_log10,
     x = :ϵ,
-    linestyle = :χm,
-    color = :κm,
+    linestyle = :xm,
+    color = :κ̄,
     Scale.color_discrete_manual(my_colors[1:2]...), #(colormap = Colors.colormap("Grays",logscale = true)),
     Geom.line,
     Coord.cartesian(xmin = 0,xmax = 1,ymin = -3.5,ymax = 0),
     Guide.xlabel("ε"),
-    Guide.ColorKey(title = "κ")
+    Guide.ColorKey(title = "κ̄")
 )

@@ -4,28 +4,28 @@
 
 # this is the actual model
 # p = parameter dictionary; κ = eddy diffusivity function; ν = advection
-# function (usually 0); λd = death rate function; λs = settling rate function;
+# function (usually 0); λm = mortality rate function; λs = settling rate function;
 # lbc and rbc = left and right boundary types ("n" = neumann/reflecting,
 # "d" = dirichlet/absorbing). Code automatically corrects x = 0 (shoreline)
 # boundary conditions if it makes no sense (larvae are lost or division by 0)
-function larva(p,κ,ν,λd,λs,lbc,rbc)
+function larva(p,κ,ν,λm,λs,lbc,rbc)
     # start timer
     t0 = time()
 
     # create meshes & extract useful quantities
-    χmesh = collect(0:p["h"]:p["L"])
-    NX = length(χmesh) - 2
-    χ_mp = χmesh[2:end] .- p["h"]/2 # midpoints of spatial mesh, χ_mp[n] = h(n-.5)
-    τmesh = collect(0:p["k"]:1) # non-dimensionalization hard-coded here
-    NT = length(τmesh)
+    xmesh = collect(0:p["h"]:p["L"])
+    NX = length(xmesh) - 2
+    x_mp = xmesh[2:end] .- p["h"]/2 # midpoints of spatial mesh, χ_mp[n] = h(n-.5)
+    tmesh = collect(0:p["k"]:1) # non-dimensionalization hard-coded here
+    NT = length(tmesh)
 
     # initialize -- larvae spawned uniformly over habitat, or concentrated at χ0
-    if isnothing(p["χ0"])
+    if isnothing(p["x0"])
         # uniform IC
-        Q_inner = float.(χmesh[2:(end-1)] .<= 1)
+        Q_inner = float.(xmesh[2:(end-1)] .<= 1)
     else
         # point-mass IC
-        Q_inner = (abs.(χmesh[2:(end-1)] .- p["χ0"]) .< p["h"]/2) / p["h"] # solution on inner mesh at current t
+        Q_inner = (abs.(xmesh[2:(end-1)] .- p["x0"]) .< p["h"]/2) / p["h"] # solution on inner mesh at current t
     end
 
     # pre-allocate
@@ -38,12 +38,12 @@ function larva(p,κ,ν,λd,λs,lbc,rbc)
     A = copy(I)
 
     # pre-compute function values on meshes
-    κ_mesh = κ(p["k"],χmesh,p)
-    κ_mp = κ(p["k"],χ_mp,p)
-    ν_mesh = ν(p["k"],χmesh,p)
-    ν_mp = ν(p["k"],χ_mp,p)
-    λd_mesh = λd(p["k"],χmesh,p)
-    λs_mesh = λs(p["k"],χmesh,p)
+    κ_mesh = κ(p["k"],xmesh,p)
+    κ_mp = κ(p["k"],x_mp,p)
+    ν_mesh = ν(p["k"],xmesh,p)
+    ν_mp = ν(p["k"],x_mp,p)
+    λm_mesh = λm(p["k"],xmesh,p)
+    λs_mesh = λs(p["k"],xmesh,p)
 
     # correct left boundary condition, if needed. Uncomment "println"s if you
     # want Julia to tell you when it does this (but it'll slow down code)
@@ -59,7 +59,7 @@ function larva(p,κ,ν,λd,λs,lbc,rbc)
     Q[2:(NX+1),1] = Q_inner
     for a in 2:NT
         # compute the next step
-        A_update!(A,NX,p["h"],κ_mesh,κ_mp,ν_mesh,ν_mp,λd_mesh,λs_mesh,lbc,rbc)
+        A_update!(A,NX,p["h"],κ_mesh,κ_mp,ν_mesh,ν_mp,λm_mesh,λs_mesh,lbc,rbc)
         Q_inner = (I - p["k"]*A) \ Q_inner
 
         # store solution and compute next steps for JDs
@@ -73,17 +73,17 @@ function larva(p,κ,ν,λd,λs,lbc,rbc)
         end
 
         # update joind densities
-        dead_jd[:, a] = Q[:,a] .* λd_mesh
+        dead_jd[:, a] = Q[:,a] .* λm_mesh
         settled_jd[:, a] = Q[:,a] .* λs_mesh
 
         # update pre-computed function vectors
         if a < NT
-            κ_mesh = κ(a*p["k"],χmesh,p)
-            κ_mp = κ(a*p["k"],χ_mp,p)
-            ν_mesh = ν(a*p["k"],χmesh,p)
-            ν_mp = ν(a*p["k"],χ_mp,p)
-            λd_mesh = λd(a*p["k"],χmesh,p)
-            λs_mesh = λs(a*p["k"],χmesh,p)
+            κ_mesh = κ(a*p["k"],xmesh,p)
+            κ_mp = κ(a*p["k"],x_mp,p)
+            ν_mesh = ν(a*p["k"],xmesh,p)
+            ν_mp = ν(a*p["k"],x_mp,p)
+            λm_mesh = λm(a*p["k"],xmesh,p)
+            λs_mesh = λs(a*p["k"],xmesh,p)
         end
     end
     # dictionary of joint densities
@@ -96,18 +96,18 @@ function larva(p,κ,ν,λd,λs,lbc,rbc)
         "settled" => cumsum(reshape(sum(settled_jd,dims = 1),NT))*p["h"]*p["k"]
     )
     t1 = time() - t0
-    return(Q,τmesh,χmesh,jd,fxnl,t1)
+    return(Q,tmesh,xmesh,jd,fxnl,t1)
 end
 
 # function for updating the matrix A each step
-function A_update!(A,NX,h,κ_mesh,κ_mp,ν_mesh,ν_mp,λd_mesh,λs_mesh,lbc,rbc)
+function A_update!(A,NX,h,κ_mesh,κ_mp,ν_mesh,ν_mp,λm_mesh,λs_mesh,lbc,rbc)
     # "mp" maps n -> (n - .5)h; "mesh" maps n -> (n-1)h
     for n in 1:(NX-1)
-        A[n,n] = -(κ_mp[n] + κ_mp[n+1])/h^2 - λd_mesh[n+1] - λs_mesh[n+1]
+        A[n,n] = -(κ_mp[n] + κ_mp[n+1])/h^2 - λm_mesh[n+1] - λs_mesh[n+1]
         A[n+1,n] = ((ν_mp[n+1] - .5*ν_mesh[n+1]) + κ_mp[n+1]/h)/h
         A[n,n+1] = (-(ν_mp[n+1] - .5*ν_mesh[n+2]) + κ_mp[n+1]/h)/h
     end
-    A[NX,NX] = -(κ_mp[NX] + κ_mp[NX+1])/h^2 - λd_mesh[NX+1] - λs_mesh[NX+1]
+    A[NX,NX] = -(κ_mp[NX] + κ_mp[NX+1])/h^2 - λm_mesh[NX+1] - λs_mesh[NX+1]
     if lbc == "n"
         A[1,1] += (κ_mp[1]/h^2 - .5*(2*ν_mp[1] - ν_mesh[2])/h) * (κ_mesh[1]/(h*ν_mesh[1] + κ_mesh[1]))
     end
@@ -122,9 +122,9 @@ function larva_fates(p,other_args)
     Y = DataFrame(
         S = fx["settled"][end], # settled
         W = fx["planktonic"][end], # wasted
-        D = fx["dead"][end] # dead
+        M = fx["dead"][end] # dead
     )
-    Y.T = Y.W + Y.S + Y.D
+    Y.T = Y.W + Y.S + Y.M
     Y.e = Y.T .- 1.
     return(Y)
 end

@@ -11,47 +11,47 @@ f3_Lxb = 50 # number of CBL widths χb to use
 # to travel further out. We run those separately because large domain
 # unnecessary for higher mortality cases
 f3u_pars_lowMortality = OrderedDict(
-    "χb" => vcat(0.,range(.5,10,length = f3_Lxb)), #collect(range(0.1,10.,length = f3a_Lxb)),
+    "xb" => vcat(0.,range(.5,10,length = f3_Lxb)), #collect(range(0.1,10.,length = f3a_Lxb)),
     "L" => [100.],
     "μ" => [0.,2.]
 )
 f3u_pars = OrderedDict(
-    "χb" => vcat(0.,range(.5,10,length = f3_Lxb)), #collect(range(0.1,10.,length = f3a_Lxb)),
+    "xb" => vcat(0.,range(.5,10,length = f3_Lxb)), #collect(range(0.1,10.,length = f3a_Lxb)),
     "μ" => [10.,],
     "L" => [50.],
 )
 f3h_pars_lowMortality = OrderedDict(
-    "χb" => vcat(0.,range(.5,10,length = f3_Lxb)), #collect(range(0.1,10.,length = f3a_Lxb)),
-    "χm" => [.1,1,2],
+    "xb" => vcat(0.,range(.5,10,length = f3_Lxb)), #collect(range(0.1,10.,length = f3a_Lxb)),
+    "xm" => [.1,1,2],
     "L" => [100.],
     "μ" => [2.]
 )
 f3h_pars = OrderedDict(
-    "χb" => vcat(0.,range(.5,10,length = f3_Lxb)), #collect(range(0.1,10.,length = f3a_Lxb)),
+    "xb" => vcat(0.,range(.5,10,length = f3_Lxb)), #collect(range(0.1,10.,length = f3a_Lxb)),
     "L" => [50.],
-    "χm" => [.1,1.,2.],
+    "xm" => [.1,1.,2.],
     "μ" => [10.]
 )
 
 # do the parameter sweeps, and time them all together
 f3_time = time()
-f3u_df = parsweep_multi(larva_fates,f3u_p0,f3u_pars,[:S,:D,:W],other_args)
-f3u_df2 = parsweep_multi(larva_fates,f3u_p0,f3u_pars_lowMortality,[:S,:D,:W],other_args)
-f3h_df = parsweep_multi(larva_fates,f3h_p0,f3h_pars,[:S,:D,:W],other_args)
-f3h_df2 = parsweep_multi(larva_fates,f3h_p0,f3h_pars_lowMortality,[:S,:D,:W],other_args)
+f3u_df = parsweep_multi(larva_fates,f3u_p0,f3u_pars,[:S,:M,:W],other_args)
+f3u_df2 = parsweep_multi(larva_fates,f3u_p0,f3u_pars_lowMortality,[:S,:M,:W],other_args)
+f3h_df = parsweep_multi(larva_fates,f3h_p0,f3h_pars,[:S,:M,:W],other_args)
+f3h_df2 = parsweep_multi(larva_fates,f3h_p0,f3h_pars_lowMortality,[:S,:M,:W],other_args)
 f3_time = time() - f3_time
 
 # make figures
 f3a = Gadfly.plot(
     filter(row -> (row.μ < ρ),f3u_df2),
     layer(
-        x = :χb,
+        x = :xb,
         y = :S,
         Theme(default_color = my_colors[1]),
         Geom.line
         ),
     layer(
-        x = :χb,
+        x = :xb,
         y = :W,
         Theme(default_color = my_colors[2]),
         Geom.line
@@ -66,20 +66,20 @@ f3a = Gadfly.plot(
 f3b = Gadfly.plot(
     filter(row -> abs(row.μ-2) < ρ,f3u_df2),
     layer(
-        x = :χb,
+        x = :xb,
         y = :S,
         Theme(default_color = my_colors[1]),
         Geom.line
         ),
     layer(
-        x = :χb,
+        x = :xb,
         y = :W,
         Theme(default_color = my_colors[2]),
         Geom.line
         ),
     layer(
-        x = :χb,
-        y = :D,
+        x = :xb,
+        y = :M,
         Theme(default_color = my_colors[3]),
         Geom.line
         ),
@@ -93,20 +93,20 @@ f3b = Gadfly.plot(
 f3c = Gadfly.plot(
     filter(row -> abs(row.μ-10) < ρ,f3u_df),
     layer(
-        x = :χb,
+        x = :xb,
         y = :S,
         Theme(default_color = my_colors[1]),
         Geom.line
         ),
     layer(
-        x = :χb,
+        x = :xb,
         y = :W,
         Theme(default_color = my_colors[2]),
         Geom.line
         ),
     layer(
-        x = :χb,
-        y = :D,
+        x = :xb,
+        y = :M,
         Theme(default_color = my_colors[3]),
         Geom.line
         ),
@@ -118,22 +118,22 @@ f3c = Gadfly.plot(
 )
 
 f3d = Gadfly.plot(
-    filter(row -> (abs(row.χm-.1) < ρ),f3h_df2),
+    filter(row -> (abs(row.xm-.1) < ρ),f3h_df2),
     layer(
-        x = :χb,
+        x = :xb,
         y = :S,
         Theme(default_color = my_colors[1]),
         Geom.line
         ),
     layer(
-        x = :χb,
+        x = :xb,
         y = :W,
         Theme(default_color = my_colors[2]),
         Geom.line
         ),
     layer(
-        x = :χb,
-        y = :D,
+        x = :xb,
+        y = :M,
         Theme(default_color = my_colors[3]),
         Geom.line
         ),
@@ -145,22 +145,22 @@ f3d = Gadfly.plot(
 )
 
 f3e = Gadfly.plot(
-    filter(row -> (abs(row.χm - 1) < ρ),f3h_df2),
+    filter(row -> (abs(row.xm - 1) < ρ),f3h_df2),
     layer(
-        x = :χb,
+        x = :xb,
         y = :S,
         Theme(default_color = my_colors[1]),
         Geom.line
         ),
     layer(
-        x = :χb,
+        x = :xb,
         y = :W,
         Theme(default_color = my_colors[2]),
         Geom.line
         ),
     layer(
-        x = :χb,
-        y = :D,
+        x = :xb,
+        y = :M,
         Theme(default_color = my_colors[3]),
         Geom.line
         ),
@@ -172,22 +172,22 @@ f3e = Gadfly.plot(
 )
 
 f3f = Gadfly.plot(
-    filter(row -> (abs(row.μ-2) < ρ) & (abs(row.χm - 2) < ρ),f3h_df2),
+    filter(row -> (abs(row.μ-2) < ρ) & (abs(row.xm - 2) < ρ),f3h_df2),
     layer(
-        x = :χb,
+        x = :xb,
         y = :S,
         Theme(default_color = my_colors[1]),
         Geom.line
         ),
     layer(
-        x = :χb,
+        x = :xb,
         y = :W,
         Theme(default_color = my_colors[2]),
         Geom.line
         ),
     layer(
-        x = :χb,
-        y = :D,
+        x = :xb,
+        y = :M,
         Theme(default_color = my_colors[3]),
         Geom.line
         ),
@@ -199,22 +199,22 @@ f3f = Gadfly.plot(
 )
 
 f3g = Gadfly.plot(
-    filter(row -> (abs(row.χm-.1) < ρ),f3h_df),
+    filter(row -> (abs(row.xm-.1) < ρ),f3h_df),
     layer(
-        x = :χb,
+        x = :xb,
         y = :S,
         Theme(default_color = my_colors[1]),
         Geom.line
         ),
     layer(
-        x = :χb,
+        x = :xb,
         y = :W,
         Theme(default_color = my_colors[2]),
         Geom.line
         ),
     layer(
-        x = :χb,
-        y = :D,
+        x = :xb,
+        y = :M,
         Theme(default_color = my_colors[3]),
         Geom.line
         ),
@@ -226,22 +226,22 @@ f3g = Gadfly.plot(
 )
 
 f3h = Gadfly.plot(
-    filter(row -> (abs(row.χm - 1) < ρ),f3h_df),
+    filter(row -> (abs(row.xm - 1) < ρ),f3h_df),
     layer(
-        x = :χb,
+        x = :xb,
         y = :S,
         Theme(default_color = my_colors[1]),
         Geom.line
         ),
     layer(
-        x = :χb,
+        x = :xb,
         y = :W,
         Theme(default_color = my_colors[2]),
         Geom.line
         ),
     layer(
-        x = :χb,
-        y = :D,
+        x = :xb,
+        y = :M,
         Theme(default_color = my_colors[3]),
         Geom.line
         ),
@@ -253,22 +253,22 @@ f3h = Gadfly.plot(
 )
 
 f3i = Gadfly.plot(
-    filter(row -> (abs(row.χm - 2) < ρ),f3h_df),
+    filter(row -> (abs(row.xm - 2) < ρ),f3h_df),
     layer(
-        x = :χb,
+        x = :xb,
         y = :S,
         Theme(default_color = my_colors[1]),
         Geom.line
         ),
     layer(
-        x = :χb,
+        x = :xb,
         y = :W,
         Theme(default_color = my_colors[2]),
         Geom.line
         ),
     layer(
-        x = :χb,
-        y = :D,
+        x = :xb,
+        y = :M,
         Theme(default_color = my_colors[3]),
         Geom.line,
         ),
